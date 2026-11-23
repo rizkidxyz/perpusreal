@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
-import { COOKIE } from '@/lib/auth';
+import { COOKIE, secureCookie } from '@/lib/auth';
 
-export async function POST() {
+export const runtime = 'nodejs';
+
+export async function POST(req: Request) {
   const res = NextResponse.json({ ok: true, data: true });
-  res.cookies.set(COOKIE, '', { httpOnly: true, path: '/', maxAge: 0 });
+  res.cookies.set(COOKIE, '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: secureCookie(req),
+    path: '/',
+    maxAge: 0,
+  });
   return res;
 }

@@ -29,13 +29,19 @@ npm run dev                  # http://localhost:3000
 
 Saat pertama kali buka `/login`, akan muncul form **Buat Admin Pertama**.
 
-## 3. Deploy ke Render (free plan)
+## 3. Deploy ke Vercel
 
-1. Push ke GitHub.
-2. Render → **New → Web Service**, pilih repo.
-3. Runtime `Node`, Build `npm install && npm run build`, Start `npm start`.
-4. Isi 3 environment variable (sama seperti `.env.local`).
-5. Tambahkan cron gratis (mis. cron-job.org) yang GET `/api/health` tiap 10 menit agar free plan tidak spin-down.
+1. Push ke GitHub, lalu **Import Project** di Vercel (framework terdeteksi otomatis sebagai Next.js).
+2. **Settings → Environment Variables** — wajib isi, centang **Production, Preview, Development**:
+   - `APPS_SCRIPT_URL` = URL Web app `/exec`
+   - `API_SECRET` = **sama persis** dengan Script Properties `API_KEY` di Apps Script
+   - `JWT_SECRET` = string acak minimal 32 karakter
+3. **Deploy ulang setelah menambah env variable.** Env yang ditambahkan setelah build lama tidak otomatis terpakai.
+4. `.env.local` tidak ikut ter-upload lewat Git integration — jangan mengandalkannya di Vercel.
+
+> Vercel menjalankan Next.js sebagai serverless function, sehingga `server.js` (custom server + Socket.IO) **tidak dipakai**. Sinyal realtime lintas perangkat belum aktif di Vercel; data tetap ter-update di tab yang melakukan transaksi dan saat jendela kembali fokus. `socket:false` pada `/api/health` di Vercel adalah hal yang normal.
+
+> Untuk mengecek environment setelah deploy: buka `/api/health?debug=1`. Respons hanya berisi status boolean (tanpa nilai rahasia): env ter-set atau tidak, cookie ada atau tidak, serta hasil verifikasi JWT.
 
 ## Catatan
 
@@ -45,7 +51,7 @@ Saat pertama kali buka `/login`, akan muncul form **Buat Admin Pertama**.
 - Cover publik lewat `/api/public/media/[id]` → action `public.cover` (Apps Script memastikan ID-nya benar-benar cover buku). Tidak bergantung hotlink Drive.
 - Navbar publik: desktop di atas, mobile di bawah (Home · Cari · Tema · Login). Ikon Cari langsung fokus ke kolom pencarian katalog.
 - Cover & bukti dikompres di browser sebelum disimpan ke Drive (batas aman payload Apps Script).
-- Kamera barcode butuh HTTPS (Render sudah menyediakannya).
+- Kamera barcode butuh HTTPS (Vercel sudah menyediakannya).
 - Dashboard memuat statistik 7/30 hari lewat action `stats.timeseries` (Chart.js di-load dynamic, ringan saat awal buka).
 - Pengembalian punya mode **Keranjang Cepat**: scan/pilih banyak buku (boleh beda peminjam), hapus dengan tombol X, lalu satu klik `loans.return` bulk.
 - Struk tersedia di `/struk/pinjam/[group]` dan `/struk/kembali?kode=...&codes=...` — HTML printable, tombol **Cetak / Simpan PDF** memakai dialog browser.

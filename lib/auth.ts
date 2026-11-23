@@ -6,6 +6,13 @@ import type { User } from './api';
 export const COOKIE = 'perpus_session';
 const secret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret-change-me');
 
+/** Host lokal memakai cookie tanpa Secure; deployment (Vercel) memakai Secure. */
+export function secureCookie(req: Request) {
+  const raw = req.headers.get('x-forwarded-host') || req.headers.get('host') || '';
+  const host = raw.split(',')[0].trim();
+  return !/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(host);
+}
+
 export async function signToken(user: User) {
   return new SignJWT({ ...user })
     .setProtectedHeader({ alg: 'HS256' })

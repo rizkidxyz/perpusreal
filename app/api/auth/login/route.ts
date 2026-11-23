@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { callGS } from '@/lib/gs';
-import { COOKIE, signToken } from '@/lib/auth';
+import { COOKIE, secureCookie, signToken } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 
@@ -11,16 +11,13 @@ export async function POST(req: Request) {
     if (!result.ok || !result.data) {
       return NextResponse.json({ ok: false, error: result.error || 'Login gagal' }, { status: 401 });
     }
-    // Tentukan Secure dari proto asli request, bukan NODE_ENV.
-    // Aman untuk http://localhost (dev/start lokal) dan https:// (Render).
-    const forwarded = req.headers.get('x-forwarded-proto');
-    const proto = (forwarded || new URL(req.url).protocol.replace(':', '')).split(',')[0].trim();
-
+    // Secure ditentukan dari host, bukan x-forwarded-proto yang nilainya bisa
+    // berbeda di balik edge Vercel. localhost tetap bisa dipakai untuk dev.
     const res = NextResponse.json({ ok: true, data: result.data });
     res.cookies.set(COOKIE, await signToken(result.data), {
       httpOnly: true,
       sameSite: 'lax',
-      secure: proto === 'https',
+      secure: secureCookie(req),
       path: '/',
       maxAge: 60 * 60 * 12,
     });
